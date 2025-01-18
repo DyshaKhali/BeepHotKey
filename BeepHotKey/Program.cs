@@ -1,6 +1,5 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Threading;
+﻿using System.Runtime.InteropServices;
+using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
@@ -18,15 +17,16 @@ class Program
 
     static void Main(string[] args)
     {
-        Console.WriteLine("Запуск программы. Удерживайте F1 для 'пиканья'.");
-        Console.WriteLine("Нажмите Ctrl+C для выхода.");
+        Console.WriteLine("Programm Start. Press F1 for 'beep'.");
+        Console.WriteLine("Press Ctrl+C for exit.");
 
-        // Инициализация звукового генератора
+        ListInputDevices();
+
         signalGenerator = new SignalGenerator()
         {
-            Gain = 1, // Громкость
-            Frequency = 1000, // Частота (Гц)
-            Type = SignalGeneratorType.Sin // Тип сигнала (синусоидальный)
+            Gain = 1, 
+            Frequency = 1000, 
+            Type = SignalGeneratorType.Sin 
         };
         waveOut = new WaveOutEvent();
 
@@ -35,12 +35,23 @@ class Program
         keyListenerThread.Start();
     }
 
+    static void ListInputDevices()
+    {
+        Console.WriteLine("\nList of devices:");
+        var enumerator = new MMDeviceEnumerator();
+        var endpoints = enumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active);
+        foreach (var device in endpoints)
+        {
+            Console.WriteLine($"Device: {device.FriendlyName}, dataflow: {device.DataFlow.ToString()}");
+        }
+    }
+
     static void MonitorKey()
     {
         while (true)
         {
-            Thread.Sleep(10); // Проверяем клавишу каждые 10 мс
-            if ((GetAsyncKeyState(VK_F1) & 0x8000) != 0) // F1 нажата
+            Thread.Sleep(10);
+            if ((GetAsyncKeyState(VK_F1) & 0x8000) != 0)
             {
                 if (!isBeeping)
                 {
@@ -61,14 +72,12 @@ class Program
 
     static void StartBeeping()
     {
-        Console.WriteLine("Начало пиканья");
         waveOut.Init(signalGenerator);
         waveOut.Play();
     }
 
     static void StopBeeping()
     {
-        Console.WriteLine("Остановка пиканья");
         waveOut.Stop();
     }
 }
